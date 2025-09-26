@@ -5,7 +5,7 @@ import google.generativeai as genai
 from gtts import gTTS
 
 # --- API Key ---
-api_key = "AIzaSyCDDf8t7hYsjP1jE_3NALM3r7OUzaaZqF8"
+api_key = "AIzaSyDylTQRIOLjVojNI13JTw4YKZ8y_TxVgfk"
 genai.configure(api_key=api_key)
 
 # genai.configure(api_key=st.secrets["google"]["api_key"])
