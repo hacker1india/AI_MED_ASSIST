@@ -6,7 +6,9 @@ from gtts import gTTS
 
 # --- API Key ---
 api_key = "AIzaSyCDDf8t7hYsjP1jE_3NALM3r7OUzaaZqF8"
-genai.configure(api_key=api_key)
+# genai.configure(api_key=api_key)
+
+genai.configure(api_key=st.secrets["google"]["api_key"])
 
 generation_config = {
     "temperature": 0.4,
