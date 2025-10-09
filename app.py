@@ -30,15 +30,15 @@ st.set_page_config(page_title="MediScan AI", page_icon="MediScanAI.png", layout=
 st.markdown("""
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // Select all elements with class 'response-text'
-    const responses = document.querySelectorAll(".response-text");
-    responses.forEach(function(resp) {
-        resp.style.color = "#1E90FF";  // Change text color (blue)
-        resp.style.fontWeight = "bold"; // Optional: make bold
-    });
+    const ai_responses = document.querySelectorAll(".response-text[style*='#f0f0f0']");
+    ai_responses.forEach(el => el.style.color = "#008000");  // AI = green
+
+    const user_responses = document.querySelectorAll(".response-text[style*='#d9f2ff']");
+    user_responses.forEach(el => el.style.color = "#FF4500"); // User = orange
 });
 </script>
 """, unsafe_allow_html=True)
+
 
 
 # --- Header ---
