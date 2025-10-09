@@ -64,7 +64,7 @@ with tab1:
     if generate_btn and uploaded_file:
         st.image(uploaded_file, caption="Uploaded Medical Image", use_column_width=True)
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
+            model_name="models/gemini-2.5-flash",
             generation_config=generation_config,
             safety_settings=safety_settings
         )
@@ -89,7 +89,7 @@ with tab1:
 
         if translate_btn:
             model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash",
+                model_name="models/gemini-2.5-flash",
                 generation_config=generation_config,
                 safety_settings=safety_settings
             )
@@ -137,7 +137,7 @@ with tab2:
     if send_btn and user_input.strip():
         st.session_state.chat_history.append(("user", user_input))
         chat_model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
+            model_name="models/gemini-2.5-flash",
             generation_config=generation_config,
             safety_settings=safety_settings
         )
@@ -166,7 +166,7 @@ with tab2:
         last_index = len(st.session_state.chat_history)-1
         if st.session_state.chat_history[last_index][0]=="assistant":
             chat_model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash",
+                model_name="models/gemini-2.5-flash",
                 generation_config=generation_config,
                 safety_settings=safety_settings
             )
