@@ -28,15 +28,18 @@ st.set_page_config(page_title="MediScan AI", page_icon="MediScanAI.png", layout=
 
 # --- CSS Styling ---
 st.markdown("""
-<style>
-body, h1, h2, h3, h4, h5, h6 { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-.card { padding:20px; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1); margin-bottom:15px; }
-.stButton>button { background-color:#138808;color:white;font-size:16px;font-weight:bold;border-radius:10px;padding:10px 20px;margin:5px 0px;border:none;transition: all 0.2s ease-in-out; }
-.stButton>button:hover { background-color:#0f6c06; transform:scale(1.05);}
-.response-text { font-size:18px;color:#000000; }
-.tab-header { color:#138808; font-weight:bold; }
-</style>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Select all elements with class 'response-text'
+    const responses = document.querySelectorAll(".response-text");
+    responses.forEach(function(resp) {
+        resp.style.color = "#1E90FF";  // Change text color (blue)
+        resp.style.fontWeight = "bold"; // Optional: make bold
+    });
+});
+</script>
 """, unsafe_allow_html=True)
+
 
 # --- Header ---
 col1, col2 = st.columns([1,5])
