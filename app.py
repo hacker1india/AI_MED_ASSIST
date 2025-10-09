@@ -120,7 +120,7 @@ with tab2:
 
     # Display chat
     for role, message in st.session_state.chat_history:
-        color = "#d9f2ff" if role=="assistant" else "#d9f2ff"
+        color = "#8f8d8d" if role=="assistant" else "#d9f2ff"
         st.markdown(f"<div class='card response-text' style='background-color:{color}'>{message}</div>", unsafe_allow_html=True)
 
     # Text input
