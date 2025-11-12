@@ -1,5 +1,3 @@
-New one with Telugu in sentence
-
 
 # --- MediScan AI: Image + Chat + Voice Output with Auto-Telugu ---
 
