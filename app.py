@@ -75,7 +75,6 @@ if not st.session_state.authenticated:
 
     if st.session_state.page == "signup":
         st.subheader("📝 Create Account")
-
         new_user = st.text_input("👤 Username")
         new_email = st.text_input("📧 Email")
         new_pass = st.text_input("🔑 Password", type="password")
@@ -90,13 +89,13 @@ if not st.session_state.authenticated:
                 if save_user(new_user, new_pass, new_email):
                     st.success("✅ Account created successfully! Please log in.")
                     st.session_state.page = "login"
-                    st.stop()  # stop instead of rerun
+                    st.experimental_rerun()
                 else:
                     st.error("⚠️ Username already exists. Try a different one.")
 
         if st.button("🔑 Go to Login"):
             st.session_state.page = "login"
-            st.stop()
+            st.experimental_rerun()
         st.stop()
 
     elif st.session_state.page == "login":
@@ -109,13 +108,14 @@ if not st.session_state.authenticated:
                 st.session_state.authenticated = True
                 st.session_state.username = username
                 st.success(f"✅ Welcome, {username}!")
-                st.stop()
+                time.sleep(1)
+                st.experimental_rerun()
             else:
                 st.error("❌ Invalid username or password.")
 
         if st.button("🆕 Create New Account"):
             st.session_state.page = "signup"
-            st.stop()
+            st.experimental_rerun()
         st.stop()
 
 # -------------------------
@@ -161,6 +161,8 @@ elif page == "💬 Chat Assistant":
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
+    if "chat_lang" not in st.session_state:
+        st.session_state.chat_lang = "English 'A'"
 
     # Display chat history
     for role, msg in st.session_state.chat_history:
@@ -175,7 +177,7 @@ elif page == "💬 Chat Assistant":
     # Buttons layout below input
     btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([2,1,1,1])
     with btn_col1:
-        lang = st.selectbox("🌐 Language", ["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"])
+        lang = st.selectbox("🌐 Language", ["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"], index=["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"].index(st.session_state.chat_lang))
     with btn_col2:
         send_btn = st.button("➡️ Send")
     with btn_col3:
@@ -185,7 +187,7 @@ elif page == "💬 Chat Assistant":
 
     if clear_btn:
         st.session_state.chat_history = []
-        st.stop()  # fix
+        st.experimental_rerun()
 
     if send_btn and user_input.strip():
         chat_model = genai.GenerativeModel(model_name="models/gemini-2.0-flash", generation_config=generation_config)
@@ -208,11 +210,21 @@ elif page == "💬 Chat Assistant":
         st.session_state.chat_history.append(("user", user_input))
         st.session_state.chat_history.append(("assistant", answer))
         st.session_state.chat_lang = lang
-        st.stop()
+        st.experimental_rerun()
 
     if speak_btn and st.session_state.chat_history:
         last_msg = [msg for role, msg in st.session_state.chat_history if role == "assistant"][-1]
-        tts = gTTS(last_msg, lang={"Telugu":"te","English":"en","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[lang])
+
+        lang_map = {
+            "Telugu 'అ'": "te",
+            "English 'A'": "en",
+            "Hindi 'अ'": "hi",
+            "Tamil 'அ'": "ta",
+            "Malayalam 'അ'": "ml"
+        }
+
+        tts_lang = lang_map.get(st.session_state.chat_lang, "en")
+        tts = gTTS(last_msg, lang=tts_lang)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
             tts.save(fp.name)
             st.audio(open(fp.name, "rb").read(), format="audio/mp3")
@@ -230,8 +242,10 @@ elif page == "📷 Image Analysis":
 
         # Buttons layout
         btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([2,1,1,1])
+        if "image_lang" not in st.session_state:
+            st.session_state.image_lang = "English 'A'"
         with btn_col1:
-            lang_img = st.selectbox("🌐 Language", ["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"], key="img_lang")
+            lang_img = st.selectbox("🌐 Language", ["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"], index=["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"].index(st.session_state.image_lang))
         with btn_col2:
             analyze_btn = st.button("🔍 Analyze Image")
         with btn_col3:
@@ -241,7 +255,7 @@ elif page == "📷 Image Analysis":
 
         if clear_btn_img:
             st.session_state.image_result = ""
-            st.stop()
+            st.experimental_rerun()
 
         if analyze_btn:
             model = genai.GenerativeModel(model_name="models/gemini-2.0-flash", generation_config=generation_config)
@@ -259,10 +273,19 @@ elif page == "📷 Image Analysis":
                 ])
                 result = trans_response.text
             st.session_state.image_result = result
+            st.session_state.image_lang = lang_img
             st.success(st.session_state.image_result)
 
         if speak_btn_img and "image_result" in st.session_state and st.session_state.image_result:
-            tts = gTTS(st.session_state.image_result, lang={"Telugu":"te","English":"en","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[lang_img])
+            lang_map = {
+                "Telugu 'అ'": "te",
+                "English 'A'": "en",
+                "Hindi 'अ'": "hi",
+                "Tamil 'அ'": "ta",
+                "Malayalam 'അ'": "ml"
+            }
+            tts_lang = lang_map.get(st.session_state.image_lang, "en")
+            tts = gTTS(st.session_state.image_result, lang=tts_lang)
             with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
                 tts.save(fp.name)
                 st.audio(open(fp.name, "rb").read(), format="audio/mp3")
@@ -298,4 +321,5 @@ elif page == "🩸 Diabetes Prediction":
 # -------------------------
 st.markdown("---")
 st.markdown("<p style='text-align:center;color:gray;'>Developed by <b>Pasumarthi Bhanu Prakash</b></p>", unsafe_allow_html=True)
+
 
