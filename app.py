@@ -1,3 +1,5 @@
+
+
 import streamlit as st
 import pandas as pd
 import os
@@ -191,37 +193,29 @@ elif page == "💬 Chat Assistant":
     if send_btn and user_input.strip():
         chat_model = genai.GenerativeModel(model_name="models/gemini-2.0-flash", generation_config=generation_config)
 
-        with st.container():
-            # Loading GIF from online URL
-            loading_placeholder = st.empty()
-            loading_placeholder.image("https://i.gifer.com/ZZ5H.gif", width=80)
+        # Generate English response first
+        response = chat_model.generate_content([
+            "You are a helpful medical assistant. Give safe, friendly advice. Do not give a diagnosis.",
+            user_input
+        ])
+        answer = response.text
 
-            # Generate English response first
-            response = chat_model.generate_content([
-                "You are a helpful medical assistant. Give safe, friendly advice. Do not give a diagnosis.",
-                user_input
+        # Translate if necessary
+        if lang != "English":
+            trans_response = chat_model.generate_content([
+                f"Translate the following English text into {lang} accurately for non-medical users:",
+                answer
             ])
-            answer = response.text
+            answer = trans_response.text
 
-            # Translate if necessary
-            if lang != "English 'A'":
-                trans_response = chat_model.generate_content([
-                    f"Translate the following English text into {lang} accurately for non-medical users:",
-                    answer
-                ])
-                answer = trans_response.text
-
-            st.session_state.chat_history.append(("user", user_input))
-            st.session_state.chat_history.append(("assistant", answer))
-            st.session_state.chat_lang = lang
-
-            loading_placeholder.empty()  # Remove GIF after response
-
+        st.session_state.chat_history.append(("user", user_input))
+        st.session_state.chat_history.append(("assistant", answer))
+        st.session_state.chat_lang = lang
         st.experimental_rerun()
 
     if speak_btn and st.session_state.chat_history:
         last_msg = [msg for role, msg in st.session_state.chat_history if role == "assistant"][-1]
-        tts = gTTS(last_msg, lang={"Telugu":"te","English":"en","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[lang.split()[0]])
+        tts = gTTS(last_msg, lang={"Telugu":"te","English":"en","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[lang])
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
             tts.save(fp.name)
             st.audio(open(fp.name, "rb").read(), format="audio/mp3")
@@ -254,29 +248,24 @@ elif page == "📷 Image Analysis":
 
         if analyze_btn:
             model = genai.GenerativeModel(model_name="models/gemini-2.0-flash", generation_config=generation_config)
-            with st.container():
-                loading_placeholder = st.empty()
-                loading_placeholder.image("https://i.gifer.com/ZZ5H.gif", width=80)
-
-                with st.spinner("Analyzing image with AI... 🧠"):
-                    image_data = {"mime_type": uploaded_file.type, "data": uploaded_file.getvalue()}
-                    response = model.generate_content([
-                        "You are a helpful medical assistant. Explain this medical image in English.",
-                        image_data
-                    ])
-                result = response.text
-                if lang_img != "English 'A'":
-                    trans_response = model.generate_content([
-                        f"Translate the following English text into {lang_img} accurately for non-medical users:",
-                        result
-                    ])
-                    result = trans_response.text
-                st.session_state.image_result = result
-                loading_placeholder.empty()
-                st.success(st.session_state.image_result)
+            with st.spinner("Analyzing image with AI... 🧠"):
+                image_data = {"mime_type": uploaded_file.type, "data": uploaded_file.getvalue()}
+                response = model.generate_content([
+                    "You are a helpful medical assistant. Explain this medical image in English.",
+                    image_data
+                ])
+            result = response.text
+            if lang_img != "English":
+                trans_response = model.generate_content([
+                    f"Translate the following English text into {lang_img} accurately for non-medical users:",
+                    result
+                ])
+                result = trans_response.text
+            st.session_state.image_result = result
+            st.success(st.session_state.image_result)
 
         if speak_btn_img and "image_result" in st.session_state and st.session_state.image_result:
-            tts = gTTS(st.session_state.image_result, lang={"Telugu":"te","English":"en","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[lang_img.split()[0]])
+            tts = gTTS(st.session_state.image_result, lang={"Telugu":"te","English":"en","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[lang_img])
             with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
                 tts.save(fp.name)
                 st.audio(open(fp.name, "rb").read(), format="audio/mp3")
@@ -312,3 +301,6 @@ elif page == "🩸 Diabetes Prediction":
 # -------------------------
 st.markdown("---")
 st.markdown("<p style='text-align:center;color:gray;'>Developed by <b>Pasumarthi Bhanu Prakash</b></p>", unsafe_allow_html=True)
+
+
+
