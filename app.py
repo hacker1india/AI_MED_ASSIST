@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import os
@@ -91,13 +90,13 @@ if not st.session_state.authenticated:
                 if save_user(new_user, new_pass, new_email):
                     st.success("✅ Account created successfully! Please log in.")
                     st.session_state.page = "login"
-                    st.experimental_rerun()
+                    st.stop()  # stop instead of rerun
                 else:
                     st.error("⚠️ Username already exists. Try a different one.")
 
         if st.button("🔑 Go to Login"):
             st.session_state.page = "login"
-            st.experimental_rerun()
+            st.stop()
         st.stop()
 
     elif st.session_state.page == "login":
@@ -110,14 +109,13 @@ if not st.session_state.authenticated:
                 st.session_state.authenticated = True
                 st.session_state.username = username
                 st.success(f"✅ Welcome, {username}!")
-                time.sleep(1)
-                st.experimental_rerun()
+                st.stop()
             else:
                 st.error("❌ Invalid username or password.")
 
         if st.button("🆕 Create New Account"):
             st.session_state.page = "signup"
-            st.experimental_rerun()
+            st.stop()
         st.stop()
 
 # -------------------------
@@ -187,7 +185,7 @@ elif page == "💬 Chat Assistant":
 
     if clear_btn:
         st.session_state.chat_history = []
-        st.experimental_rerun()
+        st.stop()  # fix
 
     if send_btn and user_input.strip():
         chat_model = genai.GenerativeModel(model_name="models/gemini-2.0-flash", generation_config=generation_config)
@@ -200,7 +198,7 @@ elif page == "💬 Chat Assistant":
         answer = response.text
 
         # Translate if necessary
-        if lang != "English":
+        if lang != "English 'A'":
             trans_response = chat_model.generate_content([
                 f"Translate the following English text into {lang} accurately for non-medical users:",
                 answer
@@ -210,7 +208,7 @@ elif page == "💬 Chat Assistant":
         st.session_state.chat_history.append(("user", user_input))
         st.session_state.chat_history.append(("assistant", answer))
         st.session_state.chat_lang = lang
-        st.experimental_rerun()
+        st.stop()
 
     if speak_btn and st.session_state.chat_history:
         last_msg = [msg for role, msg in st.session_state.chat_history if role == "assistant"][-1]
@@ -243,7 +241,7 @@ elif page == "📷 Image Analysis":
 
         if clear_btn_img:
             st.session_state.image_result = ""
-            st.experimental_rerun()
+            st.stop()
 
         if analyze_btn:
             model = genai.GenerativeModel(model_name="models/gemini-2.0-flash", generation_config=generation_config)
@@ -254,7 +252,7 @@ elif page == "📷 Image Analysis":
                     image_data
                 ])
             result = response.text
-            if lang_img != "English":
+            if lang_img != "English 'A'":
                 trans_response = model.generate_content([
                     f"Translate the following English text into {lang_img} accurately for non-medical users:",
                     result
@@ -300,3 +298,4 @@ elif page == "🩸 Diabetes Prediction":
 # -------------------------
 st.markdown("---")
 st.markdown("<p style='text-align:center;color:gray;'>Developed by <b>Pasumarthi Bhanu Prakash</b></p>", unsafe_allow_html=True)
+
