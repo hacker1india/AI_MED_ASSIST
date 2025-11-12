@@ -1,16 +1,18 @@
+
 import streamlit as st
 import pandas as pd
 import os
 import hashlib
 import google.generativeai as genai
 from gtts import gTTS
-import tempfile
 import time
+import tempfile
 
 # -------------------------
-# CONFIGURATION
+# BASIC CONFIGURATION
 # -------------------------
 st.set_page_config(page_title="💚 MediScan AI", layout="wide")
+
 api_key = "AIzaSyAgMYQjWh6wSe8GBoZHz4HiHWnZ27RxPVI"
 genai.configure(api_key=api_key)
 
@@ -74,6 +76,7 @@ if not st.session_state.authenticated:
 
     if st.session_state.page == "signup":
         st.subheader("📝 Create Account")
+
         new_user = st.text_input("👤 Username")
         new_email = st.text_input("📧 Email")
         new_pass = st.text_input("🔑 Password", type="password")
@@ -88,11 +91,13 @@ if not st.session_state.authenticated:
                 if save_user(new_user, new_pass, new_email):
                     st.success("✅ Account created successfully! Please log in.")
                     st.session_state.page = "login"
+                    st.experimental_rerun()
                 else:
                     st.error("⚠️ Username already exists. Try a different one.")
 
         if st.button("🔑 Go to Login"):
             st.session_state.page = "login"
+            st.experimental_rerun()
         st.stop()
 
     elif st.session_state.page == "login":
@@ -106,11 +111,13 @@ if not st.session_state.authenticated:
                 st.session_state.username = username
                 st.success(f"✅ Welcome, {username}!")
                 time.sleep(1)
+                st.experimental_rerun()
             else:
                 st.error("❌ Invalid username or password.")
 
         if st.button("🆕 Create New Account"):
             st.session_state.page = "signup"
+            st.experimental_rerun()
         st.stop()
 
 # -------------------------
@@ -120,7 +127,6 @@ st.sidebar.success(f"👋 Logged in as {st.session_state.username}")
 st.sidebar.markdown("### 🔖 Navigation")
 page = st.sidebar.radio("Select:", ["🏠 Home", "💬 Chat Assistant", "📷 Image Analysis", "🩸 Diabetes Prediction"])
 
-# --- Header ---
 st.markdown("""
 <style>
 @keyframes glow {
@@ -128,7 +134,11 @@ st.markdown("""
   50% { text-shadow: 0 0 20px #00FF00; }
   100% { text-shadow: 0 0 5px #138808; }
 }
-h1 { animation: glow 2s infinite alternate; color: #138808; text-align:center; }
+h1 {
+  animation: glow 2s infinite alternate;
+  color: #138808;
+  text-align:center;
+}
 </style>
 """, unsafe_allow_html=True)
 st.markdown("<h1>💚 MediScan AI - Smart Health Assistant</h1>", unsafe_allow_html=True)
@@ -140,134 +150,138 @@ if page == "🏠 Home":
     st.write("👋 Welcome to MediScan AI! Choose a feature from the sidebar.")
     st.markdown("""
     **Features:**
-    - 💬 Multilingual Chatbot (English default, translation available)  
-    - 📷 Image Analyzer (English default, translated output)  
+    - 💬 Multilingual Chatbot with voice & stop  
+    - 📷 Image Analyzer with multilingual AI explanations  
     - 🩸 Diabetes risk prediction with age factor  
     """)
 
 # -------------------------
-# CHATBOT PAGE (EN + TRANSLATION)
+# CHATBOT PAGE
 # -------------------------
 elif page == "💬 Chat Assistant":
     st.subheader("💬 Multilingual Medical Chatbot")
+
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
-    if "chat_lang" not in st.session_state:
-        st.session_state.chat_lang = "English"
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        lang = st.selectbox("🌐 Choose Language", ["English","Telugu","Hindi","Tamil","Malayalam"], key="chat_lang_select")
-    with col2:
-        speak_btn = st.button("🔊 Speak Response")
-    with col3:
-        clear_btn = st.button("🛑 Clear Chat")
-
-    if clear_btn:
-        st.session_state.chat_history = []
-
-    # Chat input
-    user_input = st.text_input("💬 Ask a health question:", key="chat_input")
-
-    if st.button("Send"):
-        chat_model = genai.GenerativeModel(model_name="models/gemini-2.0-flash", generation_config=generation_config)
-        with st.spinner("Thinking... 🤖"):
-            # First, English response
-            response = chat_model.generate_content([
-                "You are a friendly medical assistant. Answer in English. Keep it safe and clear, no diagnosis.",
-                user_input
-            ])
-            english_answer = response.text
-
-            # If selected language is not English, translate
-            if lang != "English":
-                trans_response = chat_model.generate_content([
-                    f"Translate the following English text into {lang} accurately for non-medical users:",
-                    english_answer
-                ])
-                final_answer = trans_response.text
-            else:
-                final_answer = english_answer
-
-        st.session_state.chat_history.append(("user", user_input))
-        st.session_state.chat_history.append(("assistant", final_answer))
-        st.session_state.chat_lang = lang
-
-    # Display chat
+    # Display chat history
     for role, msg in st.session_state.chat_history:
-        if role=="user":
+        if role == "user":
             st.info(f"🧑‍⚕️ You: {msg}")
         else:
             st.success(f"🤖 MediScan AI: {msg}")
 
-    # Voice output
+    # Chat input
+    user_input = st.text_input("💬 Ask a health question:")
+
+    # Buttons layout below input
+    btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([2,1,1,1])
+    with btn_col1:
+        lang = st.selectbox("🌐 Language", ["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"])
+    with btn_col2:
+        send_btn = st.button("➡️ Send")
+    with btn_col3:
+        speak_btn = st.button("🔊 Speak")
+    with btn_col4:
+        clear_btn = st.button("🛑 Clear Chat")
+
+    if clear_btn:
+        st.session_state.chat_history = []
+        st.experimental_rerun()
+
+    if send_btn and user_input.strip():
+        chat_model = genai.GenerativeModel(model_name="models/gemini-2.0-flash", generation_config=generation_config)
+
+        # Generate English response first
+        response = chat_model.generate_content([
+            "You are a helpful medical assistant. Give safe, friendly advice. Do not give a diagnosis.",
+            user_input
+        ])
+        answer = response.text
+
+        # Translate if necessary
+        if lang != "English":
+            trans_response = chat_model.generate_content([
+                f"Translate the following English text into {lang} accurately for non-medical users:",
+                answer
+            ])
+            answer = trans_response.text
+
+        st.session_state.chat_history.append(("user", user_input))
+        st.session_state.chat_history.append(("assistant", answer))
+        st.session_state.chat_lang = lang
+        st.experimental_rerun()
+
     if speak_btn and st.session_state.chat_history:
-        last_msg = [msg for role, msg in st.session_state.chat_history if role=="assistant"][-1]
-        tts = gTTS(last_msg, lang={"English":"en","Telugu":"te","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[st.session_state.chat_lang])
+        last_msg = [msg for role, msg in st.session_state.chat_history if role == "assistant"][-1]
+        tts = gTTS(last_msg, lang={"Telugu":"te","English":"en","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[lang])
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
             tts.save(fp.name)
-            st.audio(open(fp.name,"rb").read(), format="audio/mp3")
+            st.audio(open(fp.name, "rb").read(), format="audio/mp3")
 
 # -------------------------
-# IMAGE ANALYSIS PAGE (EN + TRANSLATION)
+# IMAGE ANALYSIS PAGE
 # -------------------------
 elif page == "📷 Image Analysis":
     st.subheader("📷 Upload and Analyze Medical Image")
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        lang_img = st.selectbox("🌐 Choose Language", ["English","Telugu","Hindi","Tamil","Malayalam"], key="img_lang_select")
-    with col2:
-        speak_btn_img = st.button("🔊 Speak Analysis")
-    with col3:
-        clear_btn_img = st.button("🛑 Clear Result")
+    uploaded_file = st.file_uploader("📤 Choose a medical image...", type=["png", "jpg", "jpeg"])
 
-    if clear_btn_img:
-        st.session_state.image_result = ""
-
-    uploaded_file = st.file_uploader("📤 Choose a medical image...", type=["png","jpg","jpeg"])
-    if uploaded_file and st.button("🔍 Analyze"):
+    if uploaded_file:
         st.image(uploaded_file, use_column_width=True)
-        model = genai.GenerativeModel(model_name="models/gemini-2.0-flash", generation_config=generation_config)
-        with st.spinner("Analyzing image... 🧠"):
-            image_data = {"mime_type": uploaded_file.type, "data": uploaded_file.getvalue()}
-            # English description
-            response = model.generate_content([
-                "You are a medical assistant AI. Analyze this image and explain in English for non-medical users.",
-                image_data
-            ])
-            english_result = response.text
-            # Translate if needed
-            if lang_img != "English":
-                trans_resp = model.generate_content([
-                    f"Translate the following English text into {lang_img}:",
-                    english_result
+
+        # Buttons layout
+        btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([2,1,1,1])
+        with btn_col1:
+            lang_img = st.selectbox("🌐 Language", ["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"], key="img_lang")
+        with btn_col2:
+            analyze_btn = st.button("🔍 Analyze Image")
+        with btn_col3:
+            speak_btn_img = st.button("🔊 Speak Analysis")
+        with btn_col4:
+            clear_btn_img = st.button("🛑 Clear Result")
+
+        if clear_btn_img:
+            st.session_state.image_result = ""
+            st.experimental_rerun()
+
+        if analyze_btn:
+            model = genai.GenerativeModel(model_name="models/gemini-2.0-flash", generation_config=generation_config)
+            with st.spinner("Analyzing image with AI... 🧠"):
+                image_data = {"mime_type": uploaded_file.type, "data": uploaded_file.getvalue()}
+                response = model.generate_content([
+                    "You are a helpful medical assistant. Explain this medical image in English.",
+                    image_data
                 ])
-                final_result = trans_resp.text
-            else:
-                final_result = english_result
+            result = response.text
+            if lang_img != "English":
+                trans_response = model.generate_content([
+                    f"Translate the following English text into {lang_img} accurately for non-medical users:",
+                    result
+                ])
+                result = trans_response.text
+            st.session_state.image_result = result
+            st.success(st.session_state.image_result)
 
-            st.session_state.image_result = final_result
-            st.success(final_result)
-
-    if speak_btn_img and "image_result" in st.session_state and st.session_state.image_result:
-        tts = gTTS(st.session_state.image_result, lang={"English":"en","Telugu":"te","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[lang_img])
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
-            tts.save(fp.name)
-            st.audio(open(fp.name,"rb").read(), format="audio/mp3")
+        if speak_btn_img and "image_result" in st.session_state and st.session_state.image_result:
+            tts = gTTS(st.session_state.image_result, lang={"Telugu":"te","English":"en","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[lang_img])
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
+                tts.save(fp.name)
+                st.audio(open(fp.name, "rb").read(), format="audio/mp3")
 
 # -------------------------
-# DIABETES PREDICTION
+# DIABETES PREDICTION PAGE
 # -------------------------
 elif page == "🩸 Diabetes Prediction":
     st.subheader("🩸 Check Your Diabetes Risk")
+
     age = st.number_input("Enter your age:", min_value=1, max_value=120, step=1)
     glu_val = st.number_input("Enter your glucometer reading (mg/dL):", min_value=0, step=1)
 
     if st.button("Predict"):
         if glu_val < 140:
             result = "Normal"
-            suggestion = "Your sugar level is within normal range. Keep up a healthy lifestyle."
+            suggestion = "Your sugar level is within the normal range. Keep up a healthy lifestyle."
         elif 140 <= glu_val < 200:
             result = "Prediabetic"
             suggestion = "You may be prediabetic. Maintain diet and regular exercise."
@@ -276,7 +290,7 @@ elif page == "🩸 Diabetes Prediction":
             suggestion = "High sugar levels detected. Consult a doctor."
 
         if age > 45 and result != "Normal":
-            suggestion += " Age above 45 increases risk. Please be careful."
+            suggestion += " Since you are above 45, your risk is higher. Please be careful."
 
         st.markdown(f"### 🧠 Result: **{result}**")
         st.info(suggestion)
@@ -286,3 +300,4 @@ elif page == "🩸 Diabetes Prediction":
 # -------------------------
 st.markdown("---")
 st.markdown("<p style='text-align:center;color:gray;'>Developed by <b>Pasumarthi Bhanu Prakash</b></p>", unsafe_allow_html=True)
+
