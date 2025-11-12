@@ -1,9 +1,12 @@
+
+
 import streamlit as st
 import pandas as pd
 import os
 import hashlib
 import google.generativeai as genai
 from gtts import gTTS
+import time
 import tempfile
 
 # -------------------------
@@ -61,16 +64,13 @@ def validate_user(username, password):
     return False
 
 # -------------------------
-# SESSION STATE INIT
+# LOGIN / SIGNUP
 # -------------------------
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "page" not in st.session_state:
     st.session_state.page = "login"
 
-# -------------------------
-# LOGIN / SIGNUP
-# -------------------------
 if not st.session_state.authenticated:
     st.title("💚 MediScan AI - Smart Health Assistant")
     st.markdown("### Login or Sign Up to continue")
@@ -110,8 +110,9 @@ if not st.session_state.authenticated:
             if validate_user(username, password):
                 st.session_state.authenticated = True
                 st.session_state.username = username
-                st.session_state.login_rerun = True  # trigger safe rerun
                 st.success(f"✅ Welcome, {username}!")
+                time.sleep(1)
+                st.experimental_rerun()
             else:
                 st.error("❌ Invalid username or password.")
 
@@ -119,11 +120,6 @@ if not st.session_state.authenticated:
             st.session_state.page = "signup"
             st.experimental_rerun()
         st.stop()
-
-# Safe rerun after login
-if "login_rerun" in st.session_state and st.session_state.login_rerun:
-    st.session_state.login_rerun = False
-    st.experimental_rerun()
 
 # -------------------------
 # MAIN APP
@@ -205,7 +201,7 @@ elif page == "💬 Chat Assistant":
         answer = response.text
 
         # Translate if necessary
-        if lang != "English 'A'":
+        if lang != "English":
             trans_response = chat_model.generate_content([
                 f"Translate the following English text into {lang} accurately for non-medical users:",
                 answer
@@ -219,7 +215,7 @@ elif page == "💬 Chat Assistant":
 
     if speak_btn and st.session_state.chat_history:
         last_msg = [msg for role, msg in st.session_state.chat_history if role == "assistant"][-1]
-        tts = gTTS(last_msg, lang={"Telugu 'అ'":"te","English 'A'":"en","Hindi 'अ'":"hi","Tamil 'அ'":"ta","Malayalam 'അ'":"ml"}[lang])
+        tts = gTTS(last_msg, lang={"Telugu":"te","English":"en","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[lang])
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
             tts.save(fp.name)
             st.audio(open(fp.name, "rb").read(), format="audio/mp3")
@@ -259,7 +255,7 @@ elif page == "📷 Image Analysis":
                     image_data
                 ])
             result = response.text
-            if lang_img != "English 'A'":
+            if lang_img != "English":
                 trans_response = model.generate_content([
                     f"Translate the following English text into {lang_img} accurately for non-medical users:",
                     result
@@ -269,7 +265,7 @@ elif page == "📷 Image Analysis":
             st.success(st.session_state.image_result)
 
         if speak_btn_img and "image_result" in st.session_state and st.session_state.image_result:
-            tts = gTTS(st.session_state.image_result, lang={"Telugu 'అ'":"te","English 'A'":"en","Hindi 'अ'":"hi","Tamil 'அ'":"ta","Malayalam 'അ'":"ml"}[lang_img])
+            tts = gTTS(st.session_state.image_result, lang={"Telugu":"te","English":"en","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[lang_img])
             with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
                 tts.save(fp.name)
                 st.audio(open(fp.name, "rb").read(), format="audio/mp3")
@@ -305,7 +301,5 @@ elif page == "🩸 Diabetes Prediction":
 # -------------------------
 st.markdown("---")
 st.markdown("<p style='text-align:center;color:gray;'>Developed by <b>Pasumarthi Bhanu Prakash</b></p>", unsafe_allow_html=True)
-
-
 
 
