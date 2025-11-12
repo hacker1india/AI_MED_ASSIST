@@ -11,8 +11,7 @@ import time
 # CONFIGURATION
 # -------------------------
 st.set_page_config(page_title="💚 MediScan AI", layout="wide")
-
-api_key = "AIzaSyAgMYQjWh6wSe8GBoZHz4HiHWnZ27RxPVI"  
+api_key = "AIzaSyAgMYQjWh6wSe8GBoZHz4HiHWnZ27RxPVI"
 genai.configure(api_key=api_key)
 
 generation_config = {
@@ -141,17 +140,16 @@ if page == "🏠 Home":
     st.write("👋 Welcome to MediScan AI! Choose a feature from the sidebar.")
     st.markdown("""
     **Features:**
-    - 💬 Multilingual Chatbot with voice & stop  
-    - 📷 Image Analyzer with multilingual AI explanations  
+    - 💬 Multilingual Chatbot (English default, translation available)  
+    - 📷 Image Analyzer (English default, translated output)  
     - 🩸 Diabetes risk prediction with age factor  
     """)
 
 # -------------------------
-# CHATBOT PAGE
+# CHATBOT PAGE (EN + TRANSLATION)
 # -------------------------
 elif page == "💬 Chat Assistant":
     st.subheader("💬 Multilingual Medical Chatbot")
-
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     if "chat_lang" not in st.session_state:
@@ -159,7 +157,7 @@ elif page == "💬 Chat Assistant":
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        lang = st.selectbox("🌐 Choose Language", ["English", "Telugu", "Hindi", "Tamil", "Malayalam"], key="chat_lang_select")
+        lang = st.selectbox("🌐 Choose Language", ["English","Telugu","Hindi","Tamil","Malayalam"], key="chat_lang_select")
     with col2:
         speak_btn = st.button("🔊 Speak Response")
     with col3:
@@ -174,31 +172,44 @@ elif page == "💬 Chat Assistant":
     if st.button("Send"):
         chat_model = genai.GenerativeModel(model_name="models/gemini-2.0-flash", generation_config=generation_config)
         with st.spinner("Thinking... 🤖"):
+            # First, English response
             response = chat_model.generate_content([
-                f"You are a multilingual medical assistant. Reply in {lang}. Keep it friendly, clear, and non-diagnostic.",
+                "You are a friendly medical assistant. Answer in English. Keep it safe and clear, no diagnosis.",
                 user_input
             ])
-        answer = response.text
+            english_answer = response.text
+
+            # If selected language is not English, translate
+            if lang != "English":
+                trans_response = chat_model.generate_content([
+                    f"Translate the following English text into {lang} accurately for non-medical users:",
+                    english_answer
+                ])
+                final_answer = trans_response.text
+            else:
+                final_answer = english_answer
+
         st.session_state.chat_history.append(("user", user_input))
-        st.session_state.chat_history.append(("assistant", answer))
+        st.session_state.chat_history.append(("assistant", final_answer))
         st.session_state.chat_lang = lang
 
     # Display chat
     for role, msg in st.session_state.chat_history:
-        if role == "user":
+        if role=="user":
             st.info(f"🧑‍⚕️ You: {msg}")
         else:
             st.success(f"🤖 MediScan AI: {msg}")
 
+    # Voice output
     if speak_btn and st.session_state.chat_history:
         last_msg = [msg for role, msg in st.session_state.chat_history if role=="assistant"][-1]
         tts = gTTS(last_msg, lang={"English":"en","Telugu":"te","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[st.session_state.chat_lang])
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
             tts.save(fp.name)
-            st.audio(open(fp.name, "rb").read(), format="audio/mp3")
+            st.audio(open(fp.name,"rb").read(), format="audio/mp3")
 
 # -------------------------
-# IMAGE ANALYSIS PAGE
+# IMAGE ANALYSIS PAGE (EN + TRANSLATION)
 # -------------------------
 elif page == "📷 Image Analysis":
     st.subheader("📷 Upload and Analyze Medical Image")
@@ -212,8 +223,7 @@ elif page == "📷 Image Analysis":
         clear_btn_img = st.button("🛑 Clear Result")
 
     if clear_btn_img:
-        if "image_result" in st.session_state:
-            st.session_state.image_result = ""
+        st.session_state.image_result = ""
 
     uploaded_file = st.file_uploader("📤 Choose a medical image...", type=["png","jpg","jpeg"])
     if uploaded_file and st.button("🔍 Analyze"):
@@ -221,12 +231,24 @@ elif page == "📷 Image Analysis":
         model = genai.GenerativeModel(model_name="models/gemini-2.0-flash", generation_config=generation_config)
         with st.spinner("Analyzing image... 🧠"):
             image_data = {"mime_type": uploaded_file.type, "data": uploaded_file.getvalue()}
+            # English description
             response = model.generate_content([
-                f"You are a multilingual medical assistant. Explain this image in {lang_img}. Provide simple, safe advice.",
+                "You are a medical assistant AI. Analyze this image and explain in English for non-medical users.",
                 image_data
             ])
-        st.session_state.image_result = response.text
-        st.success(st.session_state.image_result)
+            english_result = response.text
+            # Translate if needed
+            if lang_img != "English":
+                trans_resp = model.generate_content([
+                    f"Translate the following English text into {lang_img}:",
+                    english_result
+                ])
+                final_result = trans_resp.text
+            else:
+                final_result = english_result
+
+            st.session_state.image_result = final_result
+            st.success(final_result)
 
     if speak_btn_img and "image_result" in st.session_state and st.session_state.image_result:
         tts = gTTS(st.session_state.image_result, lang={"English":"en","Telugu":"te","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[lang_img])
@@ -235,7 +257,7 @@ elif page == "📷 Image Analysis":
             st.audio(open(fp.name,"rb").read(), format="audio/mp3")
 
 # -------------------------
-# DIABETES PREDICTION PAGE
+# DIABETES PREDICTION
 # -------------------------
 elif page == "🩸 Diabetes Prediction":
     st.subheader("🩸 Check Your Diabetes Risk")
