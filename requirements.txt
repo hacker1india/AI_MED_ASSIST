@@ -1,4 +1,5 @@
-streamlit==1.29.0
-google-generativeai>=0.8.0
-gTTS
-
+streamlit>=1.18
+google-generativeai
+gtts
+deep-translator
+pandas
