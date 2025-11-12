@@ -75,6 +75,7 @@ if not st.session_state.authenticated:
 
     if st.session_state.page == "signup":
         st.subheader("📝 Create Account")
+
         new_user = st.text_input("👤 Username")
         new_email = st.text_input("📧 Email")
         new_pass = st.text_input("🔑 Password", type="password")
@@ -177,7 +178,11 @@ elif page == "💬 Chat Assistant":
     # Buttons layout below input
     btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([2,1,1,1])
     with btn_col1:
-        lang = st.selectbox("🌐 Language", ["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"], index=["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"].index(st.session_state.chat_lang))
+        lang = st.selectbox(
+            "🌐 Language",
+            ["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"],
+            index=["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"].index(st.session_state.chat_lang)
+        )
     with btn_col2:
         send_btn = st.button("➡️ Send")
     with btn_col3:
@@ -187,10 +192,13 @@ elif page == "💬 Chat Assistant":
 
     if clear_btn:
         st.session_state.chat_history = []
-        st.experimental_rerun()
 
     if send_btn and user_input.strip():
         chat_model = genai.GenerativeModel(model_name="models/gemini-2.0-flash", generation_config=generation_config)
+
+        # Loading GIF
+        loading_placeholder = st.empty()
+        loading_placeholder.image("loading.gif", width=80)  # Add your loading.gif in same folder
 
         # Generate English response first
         response = chat_model.generate_content([
@@ -207,24 +215,17 @@ elif page == "💬 Chat Assistant":
             ])
             answer = trans_response.text
 
+        # Append to chat history
         st.session_state.chat_history.append(("user", user_input))
         st.session_state.chat_history.append(("assistant", answer))
         st.session_state.chat_lang = lang
-        st.experimental_rerun()
+
+        # Remove loading GIF
+        loading_placeholder.empty()
 
     if speak_btn and st.session_state.chat_history:
         last_msg = [msg for role, msg in st.session_state.chat_history if role == "assistant"][-1]
-
-        lang_map = {
-            "Telugu 'అ'": "te",
-            "English 'A'": "en",
-            "Hindi 'अ'": "hi",
-            "Tamil 'அ'": "ta",
-            "Malayalam 'അ'": "ml"
-        }
-
-        tts_lang = lang_map.get(st.session_state.chat_lang, "en")
-        tts = gTTS(last_msg, lang=tts_lang)
+        tts = gTTS(last_msg, lang={"Telugu":"te","English":"en","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[lang.split()[0]])
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
             tts.save(fp.name)
             st.audio(open(fp.name, "rb").read(), format="audio/mp3")
@@ -242,10 +243,8 @@ elif page == "📷 Image Analysis":
 
         # Buttons layout
         btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([2,1,1,1])
-        if "image_lang" not in st.session_state:
-            st.session_state.image_lang = "English 'A'"
         with btn_col1:
-            lang_img = st.selectbox("🌐 Language", ["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"], index=["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"].index(st.session_state.image_lang))
+            lang_img = st.selectbox("🌐 Language", ["Telugu 'అ'", "English 'A'", "Hindi 'अ'", "Tamil 'அ'", "Malayalam 'അ'"], key="img_lang")
         with btn_col2:
             analyze_btn = st.button("🔍 Analyze Image")
         with btn_col3:
@@ -259,6 +258,11 @@ elif page == "📷 Image Analysis":
 
         if analyze_btn:
             model = genai.GenerativeModel(model_name="models/gemini-2.0-flash", generation_config=generation_config)
+
+            # Loading GIF
+            loading_placeholder = st.empty()
+            loading_placeholder.image("loading.gif", width=80)
+
             with st.spinner("Analyzing image with AI... 🧠"):
                 image_data = {"mime_type": uploaded_file.type, "data": uploaded_file.getvalue()}
                 response = model.generate_content([
@@ -272,20 +276,13 @@ elif page == "📷 Image Analysis":
                     result
                 ])
                 result = trans_response.text
+
             st.session_state.image_result = result
-            st.session_state.image_lang = lang_img
             st.success(st.session_state.image_result)
+            loading_placeholder.empty()
 
         if speak_btn_img and "image_result" in st.session_state and st.session_state.image_result:
-            lang_map = {
-                "Telugu 'అ'": "te",
-                "English 'A'": "en",
-                "Hindi 'अ'": "hi",
-                "Tamil 'அ'": "ta",
-                "Malayalam 'അ'": "ml"
-            }
-            tts_lang = lang_map.get(st.session_state.image_lang, "en")
-            tts = gTTS(st.session_state.image_result, lang=tts_lang)
+            tts = gTTS(st.session_state.image_result, lang={"Telugu":"te","English":"en","Hindi":"hi","Tamil":"ta","Malayalam":"ml"}[lang_img.split()[0]])
             with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
                 tts.save(fp.name)
                 st.audio(open(fp.name, "rb").read(), format="audio/mp3")
@@ -321,5 +318,3 @@ elif page == "🩸 Diabetes Prediction":
 # -------------------------
 st.markdown("---")
 st.markdown("<p style='text-align:center;color:gray;'>Developed by <b>Pasumarthi Bhanu Prakash</b></p>", unsafe_allow_html=True)
-
-
