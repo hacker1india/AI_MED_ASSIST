@@ -1,3 +1,5 @@
+New one with Telugu in sentence
+
 
 # --- MediScan AI: Image + Chat + Voice Output with Auto-Telugu ---
 
@@ -38,8 +40,6 @@ body, h1, h2, h3, h4, h5, h6 { font-family: 'Segoe UI', Tahoma, Geneva, Verdana,
 </style>
 """, unsafe_allow_html=True)
 
-
-
 # --- Header ---
 col1, col2 = st.columns([1,5])
 with col1:
@@ -65,7 +65,7 @@ with tab1:
     if generate_btn and uploaded_file:
         st.image(uploaded_file, caption="Uploaded Medical Image", use_column_width=True)
         model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash",
+            model_name="gemini-1.5-flash",
             generation_config=generation_config,
             safety_settings=safety_settings
         )
@@ -90,7 +90,7 @@ with tab1:
 
         if translate_btn:
             model = genai.GenerativeModel(
-                model_name="gemini-2.5-flash",
+                model_name="gemini-1.5-flash",
                 generation_config=generation_config,
                 safety_settings=safety_settings
             )
@@ -120,7 +120,7 @@ with tab2:
 
     # Display chat
     for role, message in st.session_state.chat_history:
-        color = "#8f8d8d" if role=="assistant" else "#d9f2ff"
+        color = "#f0f0f0" if role=="assistant" else "#d9f2ff"
         st.markdown(f"<div class='card response-text' style='background-color:{color}'>{message}</div>", unsafe_allow_html=True)
 
     # Text input
@@ -138,7 +138,7 @@ with tab2:
     if send_btn and user_input.strip():
         st.session_state.chat_history.append(("user", user_input))
         chat_model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash",
+            model_name="gemini-1.5-flash",
             generation_config=generation_config,
             safety_settings=safety_settings
         )
@@ -167,7 +167,7 @@ with tab2:
         last_index = len(st.session_state.chat_history)-1
         if st.session_state.chat_history[last_index][0]=="assistant":
             chat_model = genai.GenerativeModel(
-                model_name="gemini-2.5-flash",
+                model_name="gemini-1.5-flash",
                 generation_config=generation_config,
                 safety_settings=safety_settings
             )
