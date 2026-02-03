@@ -12,7 +12,7 @@ import tempfile
 # -------------------------
 st.set_page_config(page_title="💚 MediScan AI", layout="wide")
 
-api_key = "AIzaSyAK9B5Y90Yeokur9htpNd6Ed8lvQmaqpVw"
+api_key = "AIzaSyB3ytPgol2lVmfwRAnXUKSstjGruh-upTU"
 genai.configure(api_key=api_key)
 
 generation_config = {
